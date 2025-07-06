@@ -1,44 +1,39 @@
-import csv
-import requests
+import csv, os, requests
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
 
-latest_results = [] #Hold search results
-
-
 def search_view(request):
-    global latest_results
-    latest_results = []  
-
     if request.method == 'POST':
-        queries = request.POST.getlist('query')  
-        api_key = '8bd866cb19577a8951faa3e74601e4323cff4d33781ec37a55cbc94ac87fa73b'  
+        queries = request.POST.getlist('query')
+        api_key = os.environ.get('SERPAPI_KEY')
+        session_results = []
 
         for query in queries:
-            if query.strip() == "":
+            if not query.strip():
                 messages.error(request, "One or more queries are empty.")
                 continue
 
-            url = "https://serpapi.com/search"
             params = {
                 "api_key": api_key,
                 "engine": "google",
                 "q": query,
-                "num": 5  
+                "num": 5
             }
 
             try:
-                response = requests.get(url, params=params)
-                data = response.json()
+                response = requests.get("https://serpapi.com/search", params=params)
+                if response.status_code != 200:
+                    messages.error(request, f"API Error {response.status_code} for {query}")
+                    continue
 
-                results = data.get("organic_results", [])
+                results = response.json().get("organic_results", [])
                 if not results:
                     messages.warning(request, f"No results found for: {query}")
                     continue
 
                 for item in results:
-                    latest_results.append({
+                    session_results.append({
                         "query": query,
                         "title": item.get("title", ""),
                         "link": item.get("link", ""),
@@ -48,22 +43,20 @@ def search_view(request):
             except Exception as e:
                 messages.error(request, f"Error fetching results for '{query}': {e}")
 
-    return render(request, 'search.html', {'results': latest_results})
+        request.session['latest_results'] = session_results
 
+    return render(request, 'search.html', {'results': request.session.get('latest_results', [])})
 
 
 def download_csv(request):
-    global latest_results
-
-    if not latest_results:
+    results = request.session.get('latest_results', [])
+    if not results:
         return HttpResponse("No results available to download.", content_type="text/plain")
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="search_results.csv"'
-
     writer = csv.DictWriter(response, fieldnames=["query", "title", "link", "snippet"])
     writer.writeheader()
-    for row in latest_results:
+    for row in results:
         writer.writerow(row)
-
     return response
