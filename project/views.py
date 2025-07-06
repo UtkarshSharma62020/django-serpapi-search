@@ -3,6 +3,7 @@ import requests
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
+from django.conf import settings
 
 latest_results = [] #For hold results
 
@@ -13,7 +14,7 @@ def search_view(request):
 
     if request.method == 'POST':
         queries = request.POST.getlist('query')  
-        api_key = 'SERPAPI_KEY' 
+        api_key = settings.SERPAPI_KEY
 
         for query in queries:
             if query.strip() == "":
