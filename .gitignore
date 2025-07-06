@@ -1,0 +1,16 @@
+# Ignore virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Ignore database
+db.sqlite3
+
+# Ignore settings secrets
+*.env
+
+# Ignore staticfiles collected for deployment
+/staticfiles/
+
+# VS Code
+.vscode/

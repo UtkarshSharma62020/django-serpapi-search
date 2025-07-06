@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SerpAPI Search App</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+
+<body>
+    <center>
+    <h2>Enter Search Queries</h2>
+
+    <form method="POST"> <!--Form to input-->
+        {% csrf_token %}
+
+        {% for i in "12345" %}
+        <input type="text" name="query" placeholder="Enter query {{ forloop.counter }}"><br>
+        {% endfor %}
+
+        <button type="submit">Search</button>
+    </form>
+
+
+    {% if messages %} <!-- Display error messages -->
+    <ul style="color: red;">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+
+    {% if results %} <!-- Display results -->
+    <h2>Search Results</h2>
+    <table border="1" cellpadding="5" cellspacing="0">
+        <tr>
+            <th>Query</th>
+            <th>Title</th>
+            <th>Link</th>
+            <th>Snippet</th>
+        </tr>
+
+        {% for item in results %}
+        <tr>
+            <td>{{ item.query }}</td>
+            <td>{{ item.title }}</td>
+            <td><a href="{{ item.link }}" target="_blank">{{ item.link }}</a></td>
+            <td>{{ item.snippet }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br> <!-- Download CSV -->
+    <a href="{% url 'download_csv' %}">
+        <button>Download CSV</button>
+    </a>
+    {% endif %}
+    </center>
+</body>
+
+</html>
